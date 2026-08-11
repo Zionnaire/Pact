@@ -11,8 +11,7 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "declaration": true,
-    "sourceMap": true,
-    "baseUrl": "."
+    "sourceMap": true
   },
   "include": ["src/**/*", "src/configs", "src/middleware"],
   "exclude": ["node_modules", "dist"],
