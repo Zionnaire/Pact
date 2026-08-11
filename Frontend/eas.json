@@ -15,7 +15,8 @@
       "distribution": "internal",
       "channel": "preview",
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "credentialsSource": "local"
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://pact-backend-tqj6.onrender.com/api/v1"
@@ -25,7 +26,8 @@
       "autoIncrement": true,
       "channel": "production",
       "android": {
-        "buildType": "app-bundle"
+        "buildType": "app-bundle",
+        "credentialsSource": "local"
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://pact-backend-tqj6.onrender.com/api/v1"

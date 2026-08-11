@@ -1,0 +1,31 @@
+# Same as .gitignore, but explicitly re-includes the local signing
+# credentials EAS Build needs at build time (credentialsSource: "local"
+# in eas.json) — those stay out of git, but must reach the EAS archive.
+
+node_modules/
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+.kotlin/
+*.orig.*
+*.p8
+*.p12
+*.key
+*.mobileprovision
+.metro-health-check*
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.DS_Store
+*.pem
+.env
+.env*.local
+!.env.example
+*.tsbuildinfo
+/ios
+/android
+
+!credentials.json
+!credentials/
+!credentials/*.jks
