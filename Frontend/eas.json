@@ -16,6 +16,9 @@
       "channel": "preview",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://pact-backend-tqj6.onrender.com/api/v1"
       }
     },
     "production": {
@@ -23,6 +26,9 @@
       "channel": "production",
       "android": {
         "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://pact-backend-tqj6.onrender.com/api/v1"
       }
     }
   },
