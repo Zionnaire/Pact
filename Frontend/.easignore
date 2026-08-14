@@ -1,6 +1,12 @@
-# Same as .gitignore, but explicitly re-includes the local signing
-# credentials EAS Build needs at build time (credentialsSource: "local"
-# in eas.json) — those stay out of git, but must reach the EAS archive.
+# Same as .gitignore, but explicitly re-includes files EAS needs to see
+# that git doesn't: local signing credentials (credentialsSource: "local"
+# in eas.json), and .env — EAS Update bundles using .env directly (eas.json
+# build-profile `env` only applies to `eas build`, not `eas update` — see
+# app.config.ts), and a gitignored .env is otherwise silently absent from
+# the archive, which is exactly what caused EXPO_PUBLIC_API_URL to fall
+# back to its default on a prior update. Frontend/.env only ever holds
+# EXPO_PUBLIC_-prefixed values, which are public/client-embedded by
+# definition — nothing secret is exposed by including it here.
 
 node_modules/
 .expo/
@@ -29,3 +35,4 @@ yarn-error.*
 !credentials.json
 !credentials/
 !credentials/*.jks
+!.env
