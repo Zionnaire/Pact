@@ -44,8 +44,8 @@ export const authService = {
     return data.data;
   },
 
-  async updateProfile(displayName: string): Promise<User> {
-    const { data } = await api.patch<ApiResponse<User>>('/auth/me', { displayName });
+  async updateProfile(params: { displayName?: string; bio?: string }): Promise<User> {
+    const { data } = await api.patch<ApiResponse<User>>('/auth/me', params);
     return data.data;
   },
 
@@ -60,6 +60,16 @@ export const authService = {
     const { data } = await api.post<ApiResponse<User>>('/auth/me/avatar', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
+    return data.data;
+  },
+
+  async deleteAccount(password: string): Promise<void> {
+    await api.delete('/auth/me', { data: { password } });
+    await tokenStorage.clear();
+  },
+
+  async exportData(): Promise<{ exportedAt: string; entryCount: number; entries: unknown[] }> {
+    const { data } = await api.get<ApiResponse<{ exportedAt: string; entryCount: number; entries: unknown[] }>>('/entries/export');
     return data.data;
   },
 };

@@ -8,7 +8,7 @@ export type EntryType = 'rant' | 'appreciation' | 'request' | 'observation';
 export type TranscriptStatus = 'none' | 'pending' | 'done' | 'failed';
 export type DropMode = 'standard' | 'anonymous' | 'urgent';
 export type CycleStatus = 'open' | 'ready' | 'revealed' | 'archived';
-export type PactStatus = 'active' | 'paused';
+export type PactStatus = 'active' | 'paused' | 'ended';
 export type ResolutionStatus = 'open' | 'talking' | 'resolved';
 export type ThemeSeverity = 'High' | 'Medium' | 'Low';
 export type ReactionKind = 'understood' | 'surprised' | 'need_clarity';
@@ -21,6 +21,7 @@ export interface User {
   phone?: string;
   avatarUrl?: string;
   avatarInitial: string;
+  bio?: string;
   pactId?: string;
 }
 
@@ -127,7 +128,10 @@ export type NotificationKind =
   | 'talk_scheduled'
   | 'safety_pause'
   | 'urgent_drop'
-  | 'reveal_delayed';
+  | 'reveal_delayed'
+  | 'partner_left'
+  | 'therapist_granted'
+  | 'therapist_revoked';
 
 export interface AppNotification {
   _id: string;

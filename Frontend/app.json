@@ -33,7 +33,20 @@
     },
     "plugins": [
       "expo-secure-store",
-      "expo-audio",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Pact needs microphone access so you can record voice entries for your partner."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Pact needs photo library access so you can choose a profile picture.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
       "expo-font",
       [
         "expo-splash-screen",

@@ -10,6 +10,8 @@ import { TherapistScreen } from '../screens/Therapist/TherapistScreen';
 import { SafetyScreen } from '../screens/Safety/SafetyScreen';
 import { BondedScreen } from '../screens/Bonded/BondedScreen';
 import { CycleSettingsScreen } from '../screens/CycleSettings/CycleSettingsScreen';
+import { EditProfileScreen } from '../screens/EditProfile/EditProfileScreen';
+import { DeleteAccountScreen } from '../screens/DeleteAccount/DeleteAccountScreen';
 
 const Stack = createNativeStackNavigator<MainStackParamList>();
 
@@ -25,6 +27,8 @@ export function MainNavigator() {
       <Stack.Screen name="Safety" component={SafetyScreen} />
       <Stack.Screen name="Bonded" component={BondedScreen} />
       <Stack.Screen name="CycleSettings" component={CycleSettingsScreen} />
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+      <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
     </Stack.Navigator>
   );
 }

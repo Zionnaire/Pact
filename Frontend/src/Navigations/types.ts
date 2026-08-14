@@ -29,4 +29,6 @@ export type MainStackParamList = {
   Safety: undefined;
   Bonded: undefined;
   CycleSettings: undefined;
+  EditProfile: undefined;
+  DeleteAccount: undefined;
 };

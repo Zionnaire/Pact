@@ -16,3 +16,6 @@ function defaultApiUrl(): string {
 }
 
 export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || defaultApiUrl();
+
+/** Same backend, public (unauthenticated) routes — legal pages live here, not behind /api/v1. */
+export const PUBLIC_API_BASE_URL = API_BASE_URL.replace(/\/api\/v1$/, '/api/public');

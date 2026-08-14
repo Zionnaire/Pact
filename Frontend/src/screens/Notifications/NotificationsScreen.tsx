@@ -3,17 +3,30 @@ import { View, Text, Pressable } from 'react-native';
 import { Screen, TopBar, EmptyState, SkeletonLoader } from '../../components';
 import { useNotifications } from '../../hooks';
 import { notificationService } from '../../services/notification.service';
-import type { AppNotification, NotificationKind } from '../../types';
+import type { AppNotification } from '../../types';
 
-const KIND_COPY: Record<NotificationKind, string> = {
-  reveal_ready: 'Your cycle is ready to reveal.',
-  partner_drop: 'Your partner dropped a new entry.',
-  reveal_completed: 'The vault was unlocked — go take a look.',
-  talk_scheduled: 'A talk was scheduled.',
-  safety_pause: 'Your partner paused the pact.',
-  urgent_drop: 'Your partner marked something urgent — make time to talk soon.',
-  reveal_delayed: 'Your partner asked for more time before the reveal.',
-};
+function describeNotification(notification: AppNotification): string {
+  const payload = notification.payload as { therapistEmail?: string };
+  switch (notification.kind) {
+    case 'reveal_ready': return 'Your cycle is ready to reveal.';
+    case 'partner_drop': return 'Your partner dropped a new entry.';
+    case 'reveal_completed': return 'The vault was unlocked — go take a look.';
+    case 'talk_scheduled': return 'A talk was scheduled.';
+    case 'safety_pause': return 'Your partner paused the pact.';
+    case 'urgent_drop': return 'Your partner marked something urgent — make time to talk soon.';
+    case 'reveal_delayed': return 'Your partner asked for more time before the reveal.';
+    case 'partner_left': return 'Your partner left Pact. This pact has ended — your past revealed cycles are still here.';
+    case 'therapist_granted':
+      return payload.therapistEmail
+        ? `Your partner gave ${payload.therapistEmail} read-only access to your relationship summaries. You can revoke this anytime in Settings.`
+        : 'Your partner granted therapist access to your relationship summaries.';
+    case 'therapist_revoked':
+      return payload.therapistEmail
+        ? `Therapist access for ${payload.therapistEmail} was revoked.`
+        : 'Therapist access was revoked.';
+    default: return notification.kind;
+  }
+}
 
 function NotificationRow({ notification, onPress }: { notification: AppNotification; onPress: () => void }) {
   const isUnread = !notification.readAt;
@@ -22,7 +35,7 @@ function NotificationRow({ notification, onPress }: { notification: AppNotificat
       <View className="mt-1.5 h-2 w-2 rounded-full" style={{ backgroundColor: isUnread ? '#C36341' : 'transparent' }} />
       <View className="flex-1">
         <Text className="text-[14px]" style={{ color: isUnread ? '#1E1E1E' : 'rgba(30,30,30,0.5)' }}>
-          {KIND_COPY[notification.kind] ?? notification.kind}
+          {describeNotification(notification)}
         </Text>
         <Text className="mt-1 text-[11px] text-brand-ink/30">
           {new Date(notification.createdAt).toLocaleString()}

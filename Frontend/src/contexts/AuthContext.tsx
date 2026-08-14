@@ -13,7 +13,8 @@ interface AuthContextValue {
   logout: () => Promise<void>;
   logoutAll: () => Promise<void>;
   refreshUser: () => Promise<void>;
-  updateProfile: (displayName: string) => Promise<void>;
+  updateProfile: (params: { displayName?: string; bio?: string }) => Promise<void>;
+  deleteAccount: (password: string) => Promise<void>;
   setAvatarUrl: (url: string) => void;
 }
 
@@ -71,9 +72,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(fetchedUser);
   }, []);
 
-  const updateProfile = async (displayName: string) => {
-    const updated = await authService.updateProfile(displayName);
+  const updateProfile: AuthContextValue['updateProfile'] = async (params) => {
+    const updated = await authService.updateProfile(params);
     setUser(updated);
+  };
+
+  const deleteAccount = async (password: string) => {
+    await authService.deleteAccount(password);
+    setUser(null);
   };
 
   const setAvatarUrl = (url: string) => {
@@ -90,6 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logoutAll,
     refreshUser,
     updateProfile,
+    deleteAccount,
     setAvatarUrl,
   }), [user, isLoading, refreshUser]);
 
