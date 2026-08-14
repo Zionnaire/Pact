@@ -7,6 +7,7 @@ import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-goog
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider } from './src/contexts/AuthContext';
+import { ToastProvider } from './src/contexts/ToastContext';
 import { RootNavigator } from './src/Navigations/RootNavigator';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
@@ -39,9 +40,11 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider onLayout={onLayoutRootView}>
-        <AuthProvider>
-          <RootNavigator />
-        </AuthProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <RootNavigator />
+          </AuthProvider>
+        </ToastProvider>
         <StatusBar style="dark" />
       </SafeAreaProvider>
     </GestureHandlerRootView>
