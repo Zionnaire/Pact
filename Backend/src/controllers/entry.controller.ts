@@ -175,6 +175,26 @@ export const getMyEntries = asyncHandler(async (req: Request, res: Response) => 
   res.json(new ApiResponse(200, 'Your entries', entries));
 });
 
+/**
+ * Everything you wrote, everywhere, regardless of pact/reveal status —
+ * scoped to authorId only, not req.pactId, so leaving or deleting your
+ * account doesn't cut you off from your own words first. This is the
+ * "leave with your own record intact" safety valve: no partner
+ * involvement, no approval needed, works even mid-cycle before anything's
+ * been revealed to anyone.
+ */
+export const exportMyData = asyncHandler(async (req: Request, res: Response) => {
+  const entries = await Entry.find({ authorId: req.user!._id })
+    .select('-audioPublicId')
+    .sort({ createdAt: 1 });
+
+  res.json(new ApiResponse(200, 'Your data export', {
+    exportedAt: new Date(),
+    entryCount: entries.length,
+    entries,
+  }));
+});
+
 export const setReaction = asyncHandler(async (req: Request, res: Response) => {
   const entry = await Entry.findOne({ _id: req.params.id, pactId: req.pactId });
   if (!entry) throw ApiError.notFound('Entry not found');

@@ -37,4 +37,9 @@ export const logoutSchema = z.object({
 
 export const updateProfileSchema = z.object({
   displayName: z.string().trim().min(1).max(60).optional(),
+  bio: z.string().trim().max(160).optional(),
+});
+
+export const deleteAccountSchema = z.object({
+  password: z.string().min(1),
 });

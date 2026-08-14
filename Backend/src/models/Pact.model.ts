@@ -1,6 +1,6 @@
 import { Schema, model, Document, Types } from 'mongoose';
 
-export type PactStatus = 'active' | 'paused';
+export type PactStatus = 'active' | 'paused' | 'ended';
 
 export interface IPact extends Document {
   _id: Types.ObjectId;
@@ -29,7 +29,7 @@ const pactSchema = new Schema<IPact>(
         message: 'A pact may have at most 2 partners',
       },
     },
-    status: { type: String, enum: ['active', 'paused'], default: 'active' },
+    status: { type: String, enum: ['active', 'paused', 'ended'], default: 'active' },
     cycleLengthDays: { type: Number, required: true, min: 1, max: 30, default: 7 },
     revealDay: { type: Number, required: true, min: 0, max: 6 },
     revealTime: { type: String, required: true, default: '20:00' },

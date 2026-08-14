@@ -12,6 +12,11 @@ import {
 
 const router = Router();
 
+// Not gated by requirePairedPact — exporting your own words is a personal
+// account action, not a pact-scoped one, so it can't be blocked by pact
+// state (e.g. a partner who already left, or before you've paired at all).
+router.get('/export', authMiddleware, entryController.exportMyData);
+
 router.use(authMiddleware, requirePairedPact);
 
 router.get('/mine', entryController.getMyEntries);

@@ -10,10 +10,15 @@ import { Types } from 'mongoose';
 import { User, IUser } from '../models/User.model';
 import { Session } from '../models/Session.model';
 import { Pact } from '../models/Pact.model';
+import { Entry } from '../models/Entry.model';
+import { Cycle } from '../models/Cycle.model';
+import { Notification } from '../models/Notification.model';
 import { ApiError } from '../utils/ApiError';
 import { ApiResponse } from '../utils/ApiResponse';
 import { asyncHandler } from '../utils/asyncHandler';
 import { config } from '../configs/config';
+import { cloudinary } from '../configs/cloudinary';
+import { logger } from '../utils/logger';
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -83,6 +88,7 @@ function sanitizeUser(user: IUser) {
     phone: user.phone,
     avatarUrl: user.avatarUrl,
     avatarInitial: user.avatarInitial,
+    bio: user.bio,
     pactId: user.pactId,
   };
 }
@@ -203,11 +209,14 @@ export const logoutAll = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const updateProfile = asyncHandler(async (req: Request, res: Response) => {
-  const { displayName } = req.body as { displayName?: string };
+  const { displayName, bio } = req.body as { displayName?: string; bio?: string };
 
   if (displayName) {
     req.user!.displayName = displayName;
     req.user!.avatarInitial = displayName.trim().charAt(0).toUpperCase();
+  }
+  if (bio !== undefined) {
+    req.user!.bio = bio;
   }
   await req.user!.save();
 
@@ -228,6 +237,79 @@ export const uploadAvatar = asyncHandler(async (req: Request, res: Response) => 
 export const me = asyncHandler(async (req: Request, res: Response) => {
   const pact = req.user!.pactId ? await Pact.findById(req.user!.pactId) : null;
   res.json(new ApiResponse(200, 'Current session', { user: sanitizeUser(req.user!), pact }));
+});
+
+/**
+ * Google Play / Apple App Store both require in-app account deletion that
+ * actually removes personal data, not just deactivation. We anonymize
+ * rather than hard-delete the User document (keeps referential integrity
+ * for the partner's already-revealed history — e.g. Entry.authorId,
+ * Pact.partners), which satisfies "delete personal/sensitive data" while
+ * not breaking the other partner's own past record. Anything never mutually
+ * revealed (still 'open'/'ready') is hard-deleted outright, since it was
+ * never consented to be seen and can now never be revealed.
+ */
+export const deleteAccount = asyncHandler(async (req: Request, res: Response) => {
+  const { password } = req.body as { password: string };
+
+  const user = await User.findById(req.user!._id).select('+passwordHash');
+  if (!user) throw ApiError.notFound('User not found');
+
+  const valid = await bcrypt.compare(password, user.passwordHash);
+  if (!valid) {
+    throw ApiError.unauthorized('Incorrect password');
+  }
+
+  if (user.pactId) {
+    const pact = await Pact.findById(user.pactId);
+    if (pact) {
+      const unrevealedCycles = await Cycle.find({ pactId: pact._id, status: { $in: ['open', 'ready'] } }).select('_id');
+      const unrevealedCycleIds = unrevealedCycles.map((c) => c._id);
+
+      const ownUnrevealedEntries = await Entry.find({
+        cycleId: { $in: unrevealedCycleIds },
+        authorId: user._id,
+      }).select('audioPublicId');
+
+      for (const entry of ownUnrevealedEntries) {
+        if (entry.audioPublicId) {
+          await cloudinary.uploader.destroy(entry.audioPublicId, { resource_type: 'video' }).catch((err) => {
+            logger.error(`Failed to delete Cloudinary audio ${entry.audioPublicId} during account deletion:`, err);
+          });
+        }
+      }
+      await Entry.deleteMany({ cycleId: { $in: unrevealedCycleIds }, authorId: user._id });
+
+      pact.status = 'ended';
+      await pact.save();
+
+      const partnerId = pact.partners.find((id) => !id.equals(user._id));
+      if (partnerId) {
+        await Notification.create({
+          userId: partnerId,
+          kind: 'partner_left',
+          payload: { pactId: pact._id },
+        });
+      }
+    }
+  }
+
+  await Session.updateMany({ userId: user._id, revokedAt: null }, { revokedAt: new Date() });
+
+  // Explicit $unset rather than assigning undefined + save() — Mongoose's
+  // change-tracking on `= undefined` isn't reliable for clearing indexed
+  // fields, and silently failing to clear email/phone here would mean the
+  // "deletion" doesn't actually delete personal data.
+  const unusablePasswordHash = await bcrypt.hash(new Types.ObjectId().toString(), 10);
+  await User.updateOne(
+    { _id: user._id },
+    {
+      $set: { isActive: false, displayName: 'Deleted user', passwordHash: unusablePasswordHash },
+      $unset: { email: '', phone: '', avatarUrl: '', pactId: '' },
+    },
+  );
+
+  res.json(new ApiResponse(200, 'Account deleted', null));
 });
 
 export const appConfig = asyncHandler(async (_req: Request, res: Response) => {

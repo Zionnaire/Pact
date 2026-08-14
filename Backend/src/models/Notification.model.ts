@@ -7,7 +7,10 @@ export type NotificationKind =
   | 'talk_scheduled'
   | 'safety_pause'
   | 'urgent_drop'
-  | 'reveal_delayed';
+  | 'reveal_delayed'
+  | 'partner_left'
+  | 'therapist_granted'
+  | 'therapist_revoked';
 
 export interface INotification extends Document {
   _id: Types.ObjectId;
@@ -31,6 +34,9 @@ const notificationSchema = new Schema<INotification>(
         'safety_pause',
         'urgent_drop',
         'reveal_delayed',
+        'partner_left',
+        'therapist_granted',
+        'therapist_revoked',
       ],
       required: true,
     },

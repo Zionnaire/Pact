@@ -19,13 +19,15 @@ export const getHomeSnapshot = asyncHandler(async (req: Request, res: Response) 
 
   const cycle = pact.currentCycleId ? await Cycle.findById(pact.currentCycleId) : null;
 
+  // Only the caller's own count — the partner's is never sent while the
+  // cycle is unrevealed, in either direction. A combined total would still
+  // let the client derive the partner's count by subtraction, which is the
+  // same leak with extra steps: the vault mechanic has to hold at the API
+  // boundary, not just in what the UI chooses to render.
   let sealedCounts: Record<string, number> = {};
   if (cycle) {
-    const counts = await Entry.aggregate([
-      { $match: { cycleId: cycle._id } },
-      { $group: { _id: '$authorId', count: { $sum: 1 } } },
-    ]);
-    sealedCounts = Object.fromEntries(counts.map((c) => [c._id.toString(), c.count]));
+    const myCount = await Entry.countDocuments({ cycleId: cycle._id, authorId: req.user!._id });
+    sealedCounts = { [req.user!._id.toString()]: myCount };
   }
 
   // Streak = consecutive archived cycles, most recent first, where both

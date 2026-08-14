@@ -8,6 +8,7 @@ export interface IUser extends Document {
   passwordHash: string;
   avatarUrl?: string;
   avatarInitial: string;
+  bio?: string;
   pactId?: Types.ObjectId;
   isActive: boolean;
   createdAt: Date;
@@ -21,6 +22,7 @@ const userSchema = new Schema<IUser>(
     passwordHash: { type: String, required: true, select: false },
     avatarUrl: { type: String },
     avatarInitial: { type: String, required: true, maxlength: 2 },
+    bio: { type: String, trim: true, maxlength: 160 },
     pactId: { type: Schema.Types.ObjectId, ref: 'Pact' },
     isActive: { type: Boolean, default: true },
   },
