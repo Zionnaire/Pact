@@ -18,6 +18,7 @@ import { ApiResponse } from '../utils/ApiResponse';
 import { asyncHandler } from '../utils/asyncHandler';
 import { config } from '../configs/config';
 import { cloudinary } from '../configs/cloudinary';
+import { sendEmail, emailEnabled } from '../configs/email';
 import { logger } from '../utils/logger';
 import {
   generateAccessToken,
@@ -310,6 +311,75 @@ export const deleteAccount = asyncHandler(async (req: Request, res: Response) =>
   );
 
   res.json(new ApiResponse(200, 'Account deleted', null));
+});
+
+const PASSWORD_RESET_CODE_TTL_MS = 15 * 60 * 1000;
+
+export const forgotPassword = asyncHandler(async (req: Request, res: Response) => {
+  const { identifier } = req.body as { identifier: string };
+
+  // Always the same response, whether or not an account exists — an
+  // identifier-dependent response would let this endpoint be used to test
+  // which emails/phones have a Pact account.
+  const genericResponse = new ApiResponse(200, "If an account exists for that email, we've sent a reset code.", null);
+
+  const user = await User.findOne({ $or: [{ email: identifier }, { phone: identifier }], isActive: true });
+  if (!user || !user.email || !emailEnabled) {
+    res.json(genericResponse);
+    return;
+  }
+
+  const code = String(Math.floor(100000 + Math.random() * 900000));
+  await User.updateOne(
+    { _id: user._id },
+    {
+      $set: {
+        passwordResetCodeHash: await bcrypt.hash(code, 10),
+        passwordResetExpiresAt: new Date(Date.now() + PASSWORD_RESET_CODE_TTL_MS),
+      },
+    },
+  );
+
+  sendEmail({
+    to: user.email,
+    subject: 'Your Pact password reset code',
+    html: `<p>Someone (hopefully you) asked to reset the password for your Pact account.</p>
+      <h2 style="letter-spacing:4px">${code}</h2>
+      <p>This code expires in 15 minutes. If you didn't request this, you can safely ignore this email — your password hasn't changed.</p>`,
+  }).catch((err) => logger.error('Failed to send password reset email:', err));
+
+  res.json(genericResponse);
+});
+
+export const resetPassword = asyncHandler(async (req: Request, res: Response) => {
+  const { identifier, code, newPassword } = req.body as { identifier: string; code: string; newPassword: string };
+
+  const user = await User.findOne({ $or: [{ email: identifier }, { phone: identifier }], isActive: true })
+    .select('+passwordResetCodeHash +passwordResetExpiresAt');
+
+  if (!user || !user.passwordResetCodeHash || !user.passwordResetExpiresAt || user.passwordResetExpiresAt < new Date()) {
+    throw ApiError.unauthorized('Invalid or expired reset code');
+  }
+
+  const valid = await bcrypt.compare(code, user.passwordResetCodeHash);
+  if (!valid) {
+    throw ApiError.unauthorized('Invalid or expired reset code');
+  }
+
+  const newPasswordHash = await bcrypt.hash(newPassword, 12);
+  await User.updateOne(
+    { _id: user._id },
+    {
+      $set: { passwordHash: newPasswordHash },
+      $unset: { passwordResetCodeHash: '', passwordResetExpiresAt: '' },
+    },
+  );
+
+  // Force re-login everywhere — a password reset is exactly the moment an
+  // attacker's existing session (if the account was compromised) should stop working.
+  await Session.updateMany({ userId: user._id, revokedAt: null }, { revokedAt: new Date() });
+
+  res.json(new ApiResponse(200, 'Password reset — please log in with your new password', null));
 });
 
 export const appConfig = asyncHandler(async (_req: Request, res: Response) => {

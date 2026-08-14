@@ -1,6 +1,6 @@
 import { Schema, model, Document, Types } from 'mongoose';
 
-export type InviteChannel = 'sms' | 'link';
+export type InviteChannel = 'sms' | 'link' | 'email';
 
 export interface IInvite extends Document {
   _id: Types.ObjectId;
@@ -19,7 +19,7 @@ const inviteSchema = new Schema<IInvite>(
     pactId: { type: Schema.Types.ObjectId, ref: 'Pact', required: true, index: true },
     inviterId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     code: { type: String, required: true, unique: true },
-    channel: { type: String, enum: ['sms', 'link'], required: true },
+    channel: { type: String, enum: ['sms', 'link', 'email'], required: true },
     expiresAt: { type: Date, required: true },
     acceptedAt: { type: Date },
     acceptedBy: { type: Schema.Types.ObjectId, ref: 'User' },

@@ -11,6 +11,8 @@ import {
   logoutSchema,
   updateProfileSchema,
   deleteAccountSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
 } from '../validators/auth.validator';
 
 const router = Router();
@@ -18,6 +20,8 @@ const router = Router();
 router.post('/register', authLimiter, validate(registerSchema), authController.register);
 router.post('/login', authLimiter, validate(loginSchema), authController.login);
 router.post('/refresh', authLimiter, validate(refreshSchema), authController.refresh);
+router.post('/forgot-password', authLimiter, validate(forgotPasswordSchema), authController.forgotPassword);
+router.post('/reset-password', authLimiter, validate(resetPasswordSchema), authController.resetPassword);
 router.post('/logout', authMiddleware, validate(logoutSchema), authController.logout);
 router.post('/logout-all', authMiddleware, authController.logoutAll);
 router.get('/me', authMiddleware, authController.me);

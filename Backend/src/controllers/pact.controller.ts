@@ -11,6 +11,7 @@ import { generateInviteCode } from '../utils/inviteCode';
 import { computeCycleRevealAt } from '../utils/cycleSchedule';
 import { config } from '../configs/config';
 import { sendInviteSms, twilioEnabled } from '../configs/twilio';
+import { sendEmail, emailEnabled } from '../configs/email';
 
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -98,10 +99,13 @@ export const createInvite = asyncHandler(async (req: Request, res: Response) => 
     throw ApiError.conflict('This pact already has two partners');
   }
 
-  const { channel, phone } = req.body;
+  const { channel, phone, email } = req.body;
 
   if (channel === 'sms' && !twilioEnabled) {
     throw ApiError.notImplemented('SMS invites are not configured on this server — use the link channel instead');
+  }
+  if (channel === 'email' && !emailEnabled) {
+    throw ApiError.notImplemented('Email invites are not configured on this server — use the link channel instead');
   }
 
   const invite = await Invite.create({
@@ -116,6 +120,16 @@ export const createInvite = asyncHandler(async (req: Request, res: Response) => 
 
   if (channel === 'sms') {
     await sendInviteSms(phone, `${req.user!.displayName} invited you to Pact. Join: ${inviteLink}`);
+  }
+  if (channel === 'email') {
+    await sendEmail({
+      to: email,
+      subject: `${req.user!.displayName} invited you to Pact`,
+      html: `<p>${req.user!.displayName} wants to start a Pact with you — a private, sealed journal for the two of you.</p>
+        <p>Your invite code: <strong style="letter-spacing:2px">${invite.code}</strong></p>
+        <p><a href="${inviteLink}">${inviteLink}</a></p>
+        <p>This invite expires in 7 days.</p>`,
+    });
   }
 
   res.status(201).json(new ApiResponse(201, 'Invite created', { invite, inviteLink }));

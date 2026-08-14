@@ -11,6 +11,8 @@ export interface IUser extends Document {
   bio?: string;
   pactId?: Types.ObjectId;
   isActive: boolean;
+  passwordResetCodeHash?: string;
+  passwordResetExpiresAt?: Date;
   createdAt: Date;
 }
 
@@ -25,6 +27,12 @@ const userSchema = new Schema<IUser>(
     bio: { type: String, trim: true, maxlength: 160 },
     pactId: { type: Schema.Types.ObjectId, ref: 'Pact' },
     isActive: { type: Boolean, default: true },
+    // Forgot-password OTP — a code, not a magic link, since deep-linking
+    // straight into the app from an email would need universal/app-links
+    // infra this project doesn't have yet. Both select: false — never part
+    // of a normal user fetch.
+    passwordResetCodeHash: { type: String, select: false },
+    passwordResetExpiresAt: { type: Date, select: false },
   },
   { timestamps: { createdAt: true, updatedAt: false } },
 );

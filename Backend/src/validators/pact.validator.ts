@@ -20,12 +20,18 @@ export const updatePactSchema = z.object({
 });
 
 export const createInviteSchema = z.object({
-  channel: z.enum(['sms', 'link']),
+  channel: z.enum(['sms', 'link', 'email']),
   phone: z.string().min(7).max(20).optional(),
-}).refine((data) => data.channel !== 'sms' || Boolean(data.phone), {
-  message: 'phone is required for the sms channel',
-  path: ['phone'],
-});
+  email: z.string().trim().toLowerCase().email().optional(),
+})
+  .refine((data) => data.channel !== 'sms' || Boolean(data.phone), {
+    message: 'phone is required for the sms channel',
+    path: ['phone'],
+  })
+  .refine((data) => data.channel !== 'email' || Boolean(data.email), {
+    message: 'email is required for the email channel',
+    path: ['email'],
+  });
 
 export const acceptInviteParamsSchema = z.object({
   code: z.string().min(1),

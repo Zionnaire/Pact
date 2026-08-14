@@ -90,6 +90,18 @@ export const config = {
     expoAccessToken: process.env.EXPO_ACCESS_TOKEN || '',
   },
 
+  // Microsoft Graph app-only auth (client-credentials grant) — requires an
+  // Azure AD app registration with admin-consented Mail.Send application
+  // permission. No user sign-in involved; the app sends as MS_SENDER_EMAIL.
+  email: {
+    enabled: Boolean(process.env.MS_TENANT_ID && process.env.MS_CLIENT_ID && process.env.MS_CLIENT_SECRET),
+    tenantId: process.env.MS_TENANT_ID || '',
+    clientId: process.env.MS_CLIENT_ID || '',
+    clientSecret: process.env.MS_CLIENT_SECRET || '',
+    senderEmail: process.env.MS_SENDER_EMAIL || '',
+    supportEmail: process.env.SUPPORT_EMAIL || process.env.MS_SENDER_EMAIL || '',
+  },
+
   // Protects manual/admin-only routes (e.g. granting the bonded tier for
   // free before Paystack is live). Required only if those routes are used.
   adminSecret: process.env.ADMIN_SECRET || '',

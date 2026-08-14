@@ -43,3 +43,13 @@ export const updateProfileSchema = z.object({
 export const deleteAccountSchema = z.object({
   password: z.string().min(1),
 });
+
+export const forgotPasswordSchema = z.object({
+  identifier: z.string().trim().min(1),
+});
+
+export const resetPasswordSchema = z.object({
+  identifier: z.string().trim().min(1),
+  code: z.string().length(6),
+  newPassword: z.string().min(8).max(128),
+});
