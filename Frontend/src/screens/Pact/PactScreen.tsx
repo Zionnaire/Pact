@@ -4,13 +4,14 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import * as Updates from 'expo-updates';
+import * as Clipboard from 'expo-clipboard';
 import { Screen, AppHeader, HeroStatsCard, SheetRow, Button } from '../../components';
 import { usePact } from '../../contexts/PactContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePartner, usePulse } from '../../hooks';
 import { checkAndApplyUpdate } from '../../utils/updates';
 import { authService } from '../../services/auth.service';
-import { PUBLIC_API_BASE_URL } from '../../config/env';
+import { API_BASE_URL, PUBLIC_API_BASE_URL } from '../../config/env';
 import { ApiRequestError } from '../../types';
 import type { MainStackParamList } from '../../Navigations/types';
 
@@ -29,6 +30,11 @@ export function PactScreen() {
     const result = await checkAndApplyUpdate();
     setIsCheckingUpdate(false);
     if (!result.applied) Alert.alert('Updates', result.message);
+  };
+
+  const handleCopyApiUrl = async () => {
+    await Clipboard.setStringAsync(API_BASE_URL);
+    Alert.alert('Copied', API_BASE_URL);
   };
 
   const handleExportData = async () => {
@@ -117,6 +123,14 @@ export function PactScreen() {
             label={isCheckingUpdate ? 'Checking…' : 'Check for updates'}
             description={Updates.channel ? `Channel: ${Updates.channel}` : 'Development build'}
             onPress={handleCheckForUpdate}
+            showChevron={false}
+          />
+          <View className="h-px bg-brand-ink/5" />
+          <SheetRow
+            icon="server-outline"
+            label="API endpoint"
+            description={API_BASE_URL}
+            onPress={handleCopyApiUrl}
             showChevron={false}
           />
         </View>

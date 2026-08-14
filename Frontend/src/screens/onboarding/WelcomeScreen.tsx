@@ -4,8 +4,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeIn, FadeInUp } from 'react-native-reanimated';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
+import * as Updates from 'expo-updates';
 import { Screen, Button } from '../../components';
 import { IMAGES } from '../../theme/images';
+import { API_BASE_URL } from '../../config/env';
 import type { AuthStackParamList } from '../../Navigations/types';
 
 export function WelcomeScreen() {
@@ -49,6 +51,9 @@ export function WelcomeScreen() {
         </Pressable>
         <Text className="text-center text-[9px] font-sans-semibold uppercase tracking-[0.25em] text-brand-ink/30">
           Encrypted · Consent-based · Private
+        </Text>
+        <Text className="mt-1 text-center text-[9px] text-brand-ink/20" selectable>
+          {API_BASE_URL} · channel: {Updates.channel ?? 'dev'} · rt: {Updates.runtimeVersion ?? '—'}
         </Text>
       </Animated.View>
     </Screen>
