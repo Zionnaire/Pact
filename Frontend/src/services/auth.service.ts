@@ -72,4 +72,12 @@ export const authService = {
     const { data } = await api.get<ApiResponse<{ exportedAt: string; entryCount: number; entries: unknown[] }>>('/entries/export');
     return data.data;
   },
+
+  async forgotPassword(identifier: string): Promise<void> {
+    await api.post('/auth/forgot-password', { identifier });
+  },
+
+  async resetPassword(identifier: string, code: string, newPassword: string): Promise<void> {
+    await api.post('/auth/reset-password', { identifier, code, newPassword });
+  },
 };

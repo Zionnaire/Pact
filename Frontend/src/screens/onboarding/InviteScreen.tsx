@@ -41,10 +41,20 @@ export function InviteScreen() {
     if (!link) return;
     setIsSending(true);
     try {
-      if (PHONE_RE.test(contact.trim())) {
-        await Linking.openURL(`sms:${contact.trim()}?body=${encodeURIComponent(message)}`);
-      } else if (EMAIL_RE.test(contact.trim())) {
-        await Linking.openURL(`mailto:${contact.trim()}?subject=${encodeURIComponent('An invite to Pact')}&body=${encodeURIComponent(message)}`);
+      const trimmedContact = contact.trim();
+      if (EMAIL_RE.test(trimmedContact)) {
+        // Try a real, server-sent email first — falls back to opening the
+        // user's own mail app if the backend's email isn't configured, so
+        // this still works with zero setup either way.
+        try {
+          await pactService.createInvite('email', { email: trimmedContact });
+          navigation.navigate('Cycle');
+          return;
+        } catch {
+          await Linking.openURL(`mailto:${trimmedContact}?subject=${encodeURIComponent('An invite to Pact')}&body=${encodeURIComponent(message)}`);
+        }
+      } else if (PHONE_RE.test(trimmedContact)) {
+        await Linking.openURL(`sms:${trimmedContact}?body=${encodeURIComponent(message)}`);
       } else {
         await Share.share({ message });
       }

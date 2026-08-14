@@ -2,6 +2,8 @@ export type AuthStackParamList = {
   Welcome: undefined;
   Login: undefined;
   Register: { hasInvite?: boolean } | undefined;
+  ForgotPassword: undefined;
+  ResetPassword: { identifier: string };
 };
 
 export type OnboardingStackParamList = {

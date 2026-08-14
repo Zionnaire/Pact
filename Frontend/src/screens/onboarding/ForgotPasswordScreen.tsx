@@ -1,18 +1,16 @@
 import React, { useState } from 'react';
-import { Text, Pressable } from 'react-native';
+import { Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen, TopBar, TextField, Button } from '../../components';
-import { useAuth } from '../../contexts/AuthContext';
+import { authService } from '../../services/auth.service';
 import { ApiRequestError } from '../../types';
 import type { AuthStackParamList } from '../../Navigations/types';
 
-export function LoginScreen() {
-  const { login } = useAuth();
+export function ForgotPasswordScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
 
   const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -20,9 +18,10 @@ export function LoginScreen() {
     setError(null);
     setIsSubmitting(true);
     try {
-      await login(identifier.trim(), password);
+      await authService.forgotPassword(identifier.trim());
+      navigation.navigate('ResetPassword', { identifier: identifier.trim() });
     } catch (err) {
-      setError(err instanceof ApiRequestError ? err.message : 'Could not log in — check your details');
+      setError(err instanceof ApiRequestError ? err.message : 'Something went wrong — try again');
     } finally {
       setIsSubmitting(false);
     }
@@ -30,20 +29,20 @@ export function LoginScreen() {
 
   return (
     <Screen>
-      <TopBar title="Log in" showBack />
+      <TopBar title="Reset password" showBack />
+      <Text className="mb-6 text-[13px] leading-5 text-brand-ink/60">
+        Enter the email on your account and we'll send you a 6-digit code to reset your password.
+      </Text>
       <TextField
-        label="Email or phone"
+        label="Email"
         value={identifier}
         onChangeText={setIdentifier}
         autoCapitalize="none"
         keyboardType="email-address"
+        placeholder="you@example.com"
       />
-      <TextField label="Password" value={password} onChangeText={setPassword} secureTextEntry />
-      <Pressable onPress={() => navigation.navigate('ForgotPassword')} className="mb-4 min-h-11 items-end justify-center">
-        <Text className="text-[12px] font-sans-semibold text-brand-clay">Forgot password?</Text>
-      </Pressable>
       {error && <Text className="mb-4 text-[13px] text-type-rant">{error}</Text>}
-      <Button label="Log in" onPress={handleSubmit} loading={isSubmitting} disabled={!identifier || !password} />
+      <Button label="Send reset code" onPress={handleSubmit} loading={isSubmitting} disabled={!identifier.trim()} />
     </Screen>
   );
 }

@@ -167,7 +167,7 @@ export interface Invite {
   pactId: string;
   inviterId: string;
   code: string;
-  channel: 'sms' | 'link';
+  channel: 'sms' | 'link' | 'email';
   expiresAt: string;
   acceptedAt?: string;
 }

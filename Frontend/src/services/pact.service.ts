@@ -40,8 +40,8 @@ export const pactService = {
     return data.data;
   },
 
-  async createInvite(channel: 'sms' | 'link', phone?: string): Promise<{ invite: Invite; inviteLink: string }> {
-    const { data } = await api.post<ApiResponse<{ invite: Invite; inviteLink: string }>>('/pacts/invites', { channel, phone });
+  async createInvite(channel: 'sms' | 'link' | 'email', contact?: { phone?: string; email?: string }): Promise<{ invite: Invite; inviteLink: string }> {
+    const { data } = await api.post<ApiResponse<{ invite: Invite; inviteLink: string }>>('/pacts/invites', { channel, ...contact });
     return data.data;
   },
 
