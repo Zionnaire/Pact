@@ -19,11 +19,36 @@ export function PactScreen() {
   const navigation = useNavigation();
   const parentNav = navigation.getParent<NativeStackNavigationProp<MainStackParamList>>();
   const { snapshot } = usePact();
-  const { user, logout } = useAuth();
+  const { user, logout, leavePact } = useAuth();
   const partner = usePartner();
   const { data: pulse } = usePulse();
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
+
+  const handleLeavePact = () => {
+    Alert.alert(
+      'Leave this pact?',
+      'This ends the pact for both of you. Your partner keeps what you already mutually revealed. Anything you dropped this cycle that was never revealed is deleted. You keep your own account and can start or join a new pact afterward.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Leave pact',
+          style: 'destructive',
+          onPress: async () => {
+            setIsLeaving(true);
+            try {
+              await leavePact();
+            } catch (err) {
+              Alert.alert('Could not leave', err instanceof ApiRequestError ? err.message : 'Something went wrong');
+            } finally {
+              setIsLeaving(false);
+            }
+          },
+        },
+      ],
+    );
+  };
 
   const handleCheckForUpdate = async () => {
     setIsCheckingUpdate(true);
@@ -74,6 +99,22 @@ export function PactScreen() {
           weekStreak={snapshot?.streak ?? 0}
           resolvedPct={pulse ? Math.round(pulse.resolutionRate * 100) : 0}
         />
+      )}
+
+      {user && !user.profileComplete && (
+        <Pressable
+          onPress={() => parentNav?.navigate('CompleteProfile')}
+          className="mt-4 min-h-11 flex-row items-center gap-3 rounded-2xl border border-type-rant/30 bg-type-rant/10 p-4 active:opacity-80"
+        >
+          <View className="h-9 w-9 items-center justify-center rounded-full bg-white">
+            <Ionicons name="alert-circle-outline" size={16} color="#E5989B" />
+          </View>
+          <View className="flex-1">
+            <Text className="text-[14px] text-brand-ink">Complete your profile</Text>
+            <Text className="text-[12px] text-brand-ink/50">Add an email + password to start dropping entries</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color="rgba(30,30,30,0.3)" />
+        </Pressable>
       )}
 
       <Pressable
@@ -152,6 +193,13 @@ export function PactScreen() {
       <Text className="mb-2 mt-8 text-[10px] font-sans-semibold uppercase tracking-[0.3em] text-type-rant">Danger zone</Text>
       <View className="mb-2 rounded-2xl bg-white ring-1 ring-type-rant/20">
         <View className="px-4">
+          <SheetRow
+            icon="exit-outline"
+            label={isLeaving ? 'Leaving…' : 'Leave this pact'}
+            description="Keep your account, end this pact"
+            onPress={handleLeavePact}
+          />
+          <View className="h-px bg-brand-ink/5" />
           <SheetRow icon="trash-outline" label="Delete account" onPress={() => parentNav?.navigate('DeleteAccount')} />
         </View>
       </View>

@@ -23,6 +23,8 @@ export interface User {
   avatarInitial: string;
   bio?: string;
   pactId?: string;
+  /** False for a "quick join" account (name only, via invite code) — dropping entries is blocked until email/phone + a real password are set. */
+  profileComplete: boolean;
 }
 
 export interface Pact {

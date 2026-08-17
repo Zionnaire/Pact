@@ -80,4 +80,9 @@ export const authService = {
   async resetPassword(identifier: string, code: string, newPassword: string): Promise<void> {
     await api.post('/auth/reset-password', { identifier, code, newPassword });
   },
+
+  async completeProfile(params: { email?: string; phone?: string; password: string }): Promise<User> {
+    const { data } = await api.post<ApiResponse<User>>('/auth/me/complete-profile', params);
+    return data.data;
+  },
 };

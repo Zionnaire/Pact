@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { authService } from '../services/auth.service';
+import { pactService } from '../services/pact.service';
 import { registerAuthFailureHandler } from '../services/api';
 import { tokenStorage } from '../utils/storage';
 import type { User } from '../types';
@@ -10,11 +11,15 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   register: (params: { displayName: string; email?: string; phone?: string; password: string }) => Promise<void>;
   login: (identifier: string, password: string) => Promise<void>;
+  /** No account required beforehand — creates a minimal one and pairs in a single step. */
+  quickJoin: (code: string, displayName: string) => Promise<void>;
   logout: () => Promise<void>;
   logoutAll: () => Promise<void>;
   refreshUser: () => Promise<void>;
   updateProfile: (params: { displayName?: string; bio?: string }) => Promise<void>;
+  completeProfile: (params: { email?: string; phone?: string; password: string }) => Promise<void>;
   deleteAccount: (password: string) => Promise<void>;
+  leavePact: () => Promise<void>;
   setAvatarUrl: (url: string) => void;
 }
 
@@ -57,6 +62,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(loggedInUser);
   };
 
+  const quickJoin: AuthContextValue['quickJoin'] = async (code, displayName) => {
+    const joinedUser = await pactService.quickJoin(code, displayName);
+    setUser(joinedUser);
+  };
+
   const logout = async () => {
     await authService.logout();
     setUser(null);
@@ -77,9 +87,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(updated);
   };
 
+  const completeProfile: AuthContextValue['completeProfile'] = async (params) => {
+    const updated = await authService.completeProfile(params);
+    setUser(updated);
+  };
+
   const deleteAccount = async (password: string) => {
     await authService.deleteAccount(password);
     setUser(null);
+  };
+
+  const leavePact = async () => {
+    await pactService.leave();
+    await refreshUser();
   };
 
   const setAvatarUrl = (url: string) => {
@@ -92,11 +112,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: Boolean(user),
     register,
     login,
+    quickJoin,
     logout,
     logoutAll,
     refreshUser,
     updateProfile,
+    completeProfile,
     deleteAccount,
+    leavePact,
     setAvatarUrl,
   }), [user, isLoading, refreshUser]);
 

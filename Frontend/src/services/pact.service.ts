@@ -1,5 +1,7 @@
 import { api } from './api';
-import type { ApiResponse, Pact, Cycle, Invite, HomeSnapshot } from '../types';
+import { tokenStorage } from '../utils/storage';
+import { getDeviceInfo } from '../utils/device';
+import type { ApiResponse, AuthTokens, Pact, Cycle, Invite, HomeSnapshot, User } from '../types';
 
 export interface CreatePactParams {
   name?: string;
@@ -67,5 +69,20 @@ export const pactService = {
   async resume(): Promise<Pact> {
     const { data } = await api.patch<ApiResponse<Pact>>('/pacts/me/resume');
     return data.data;
+  },
+
+  async leave(): Promise<void> {
+    await api.post('/pacts/me/leave');
+  },
+
+  /** For someone with no account yet — creates one (name only) and pairs in a single step. */
+  async quickJoin(code: string, displayName: string): Promise<User> {
+    const device = await getDeviceInfo();
+    const { data } = await api.post<ApiResponse<{ user: User; pact: Pact } & AuthTokens>>(
+      `/pacts/invites/${code}/quick-join`,
+      { displayName, ...device },
+    );
+    await tokenStorage.setTokens(data.data.accessToken, data.data.refreshToken);
+    return data.data.user;
   },
 };

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   Screen,
   TypeSelector,
@@ -14,8 +15,10 @@ import {
 import { entryService } from '../../services/entry.service';
 import { aiService } from '../../services/ai.service';
 import { usePact } from '../../contexts/PactContext';
+import { useAuth } from '../../contexts/AuthContext';
 import type { DropMode, EntryType } from '../../types';
 import { ApiRequestError } from '../../types';
+import type { MainStackParamList } from '../../Navigations/types';
 
 type Mode = 'write' | 'record';
 
@@ -31,8 +34,9 @@ const MAX_LENGTH = 600;
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export function DropScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
   const { snapshot, refresh } = usePact();
+  const { user } = useAuth();
 
   const [mode, setMode] = useState<Mode>('write');
   const [type, setType] = useState<EntryType | null>(null);
@@ -79,6 +83,24 @@ export function DropScreen() {
       setIsSubmitting(false);
     }
   };
+
+  if (user && !user.profileComplete) {
+    return (
+      <Screen scroll={false} className="items-center justify-center">
+        <Ionicons name="lock-closed-outline" size={32} color="#5B1F24" />
+        <Text className="mt-4 text-center font-serif text-xl text-brand-plum">Complete your profile to drop entries</Text>
+        <Text className="mt-2 text-center text-[13px] leading-5 text-brand-ink/50">
+          You joined with just your name — add an email and password first, so what you write here is never stuck on a single device.
+        </Text>
+        <View className="mt-6 w-full">
+          <Button label="Complete profile" onPress={() => navigation.navigate('CompleteProfile')} />
+          <Pressable onPress={() => navigation.goBack()} className="mt-3 min-h-11 items-center justify-center">
+            <Text className="text-[13px] text-brand-ink/40">Not now</Text>
+          </Pressable>
+        </View>
+      </Screen>
+    );
+  }
 
   return (
     <Screen>

@@ -12,6 +12,7 @@ import { BondedScreen } from '../screens/Bonded/BondedScreen';
 import { CycleSettingsScreen } from '../screens/CycleSettings/CycleSettingsScreen';
 import { EditProfileScreen } from '../screens/EditProfile/EditProfileScreen';
 import { DeleteAccountScreen } from '../screens/DeleteAccount/DeleteAccountScreen';
+import { CompleteProfileScreen } from '../screens/CompleteProfile/CompleteProfileScreen';
 
 const Stack = createNativeStackNavigator<MainStackParamList>();
 
@@ -29,6 +30,7 @@ export function MainNavigator() {
       <Stack.Screen name="CycleSettings" component={CycleSettingsScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
+      <Stack.Screen name="CompleteProfile" component={CompleteProfileScreen} options={{ presentation: 'modal' }} />
     </Stack.Navigator>
   );
 }

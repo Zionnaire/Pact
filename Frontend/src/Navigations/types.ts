@@ -1,12 +1,15 @@
 export type AuthStackParamList = {
   Welcome: undefined;
-  Login: undefined;
-  Register: { hasInvite?: boolean } | undefined;
+  Login: { inviteCode?: string } | undefined;
+  Register: undefined;
+  QuickJoin: undefined;
   ForgotPassword: undefined;
   ResetPassword: { identifier: string };
 };
 
 export type OnboardingStackParamList = {
+  PairingChoice: undefined;
+  JoinPact: undefined;
   Intention: undefined;
   Invite: undefined;
   Cycle: undefined;
@@ -33,4 +36,5 @@ export type MainStackParamList = {
   CycleSettings: undefined;
   EditProfile: undefined;
   DeleteAccount: undefined;
+  CompleteProfile: undefined;
 };

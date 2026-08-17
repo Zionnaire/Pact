@@ -17,7 +17,7 @@ import { ExpoConfig } from '@expo/config-types';
  * Frontend/.env pointed at the real backend before publishing an update.
  */
 function defaultApiUrl(): string {
-  return 'http://10.0.2.2:5001/api/v1';
+  return 'https://pact-backend-tqj6.onrender.com/api/v1';
 }
 
 const config: ExpoConfig = {

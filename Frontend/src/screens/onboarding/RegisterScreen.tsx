@@ -1,21 +1,22 @@
 import React, { useState } from 'react';
 import { Text } from 'react-native';
-import { useRoute, type RouteProp } from '@react-navigation/native';
 import { Screen, TopBar, TextField, Button } from '../../components';
 import { useAuth } from '../../contexts/AuthContext';
-import { pactService } from '../../services/pact.service';
 import { ApiRequestError } from '../../types';
-import type { AuthStackParamList } from '../../Navigations/types';
 
+/**
+ * Registration is deliberately just identity — no pact, no invite code.
+ * What comes after (start a new pact vs. join one with a code) is decided
+ * on PairingChoiceScreen once you're authenticated. Someone who already
+ * has an invite code and no account should use QuickJoinScreen instead —
+ * lighter weight, no password required upfront.
+ */
 export function RegisterScreen() {
-  const { register, refreshUser } = useAuth();
-  const route = useRoute<RouteProp<AuthStackParamList, 'Register'>>();
-  const hasInvite = Boolean(route.params?.hasInvite);
+  const { register } = useAuth();
 
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -24,21 +25,7 @@ export function RegisterScreen() {
     setIsSubmitting(true);
     try {
       await register({ displayName: displayName.trim(), email: email.trim(), password });
-
-      if (inviteCode.trim()) {
-        try {
-          await pactService.acceptInvite(inviteCode.trim().toUpperCase());
-          await refreshUser();
-        } catch (inviteErr) {
-          // Account creation still succeeded — let them retry the code from
-          // onboarding instead of losing the account they just made.
-          setError(
-            inviteErr instanceof ApiRequestError
-              ? `Account created, but that invite code didn't work: ${inviteErr.message}`
-              : "Account created, but that invite code didn't work.",
-          );
-        }
-      }
+      // RootNavigator switches to OnboardingStack (PairingChoiceScreen) automatically once authenticated.
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : 'Could not create your account');
     } finally {
@@ -52,13 +39,6 @@ export function RegisterScreen() {
       <TextField label="Your name" value={displayName} onChangeText={setDisplayName} autoCapitalize="words" />
       <TextField label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
       <TextField label="Password" value={password} onChangeText={setPassword} secureTextEntry />
-      <TextField
-        label={hasInvite ? 'Invite code' : 'Invite code (optional)'}
-        value={inviteCode}
-        onChangeText={setInviteCode}
-        autoCapitalize="characters"
-        placeholder="PACT-XXXXXX"
-      />
       {error && <Text className="mb-4 text-[13px] text-type-rant">{error}</Text>}
       <Button
         label="Create account"

@@ -64,8 +64,9 @@ function RecentDropRow({ entry, index }: { entry: Entry; index: number }) {
 }
 
 export function HomeScreen() {
-  const { user } = useAuth();
+  const { user, leavePact } = useAuth();
   const { snapshot, isLoading, refresh } = usePact();
+  const [isLeaving, setIsLeaving] = useState(false);
   const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList>>();
   const parentNav = navigation.getParent<NativeStackNavigationProp<MainStackParamList>>();
   const [now, setNow] = useState(Date.now());
@@ -109,6 +110,23 @@ export function HomeScreen() {
 
         {isLoading && !snapshot ? (
           <SkeletonLoader height={170} className="my-6" />
+        ) : snapshot?.pact.status === 'ended' ? (
+          <View className="my-6 rounded-3xl bg-white p-6 ring-1 ring-brand-ink/5">
+            <Text className="text-center font-serif text-lg text-brand-plum">This pact has ended</Text>
+            <Text className="mt-2 text-center text-[13px] leading-5 text-brand-ink/50">
+              Your partner left. What you already revealed together is still yours — but this pact can't continue.
+            </Text>
+            <View className="mt-5">
+              <Button
+                label={isLeaving ? 'Starting over…' : 'Start or join a new pact'}
+                onPress={async () => {
+                  setIsLeaving(true);
+                  await leavePact().finally(() => setIsLeaving(false));
+                }}
+                loading={isLeaving}
+              />
+            </View>
+          </View>
         ) : cycle ? (
           <View
             className="my-6 overflow-hidden rounded-3xl"

@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
 import { Text, Pressable } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Screen, TopBar, TextField, Button } from '../../components';
 import { useAuth } from '../../contexts/AuthContext';
+import { pactService } from '../../services/pact.service';
 import { ApiRequestError } from '../../types';
 import type { AuthStackParamList } from '../../Navigations/types';
 
 export function LoginScreen() {
-  const { login } = useAuth();
+  const { login, refreshUser } = useAuth();
   const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+  const route = useRoute<RouteProp<AuthStackParamList, 'Login'>>();
+  const inviteCode = route.params?.inviteCode;
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -21,6 +24,19 @@ export function LoginScreen() {
     setIsSubmitting(true);
     try {
       await login(identifier.trim(), password);
+
+      if (inviteCode) {
+        try {
+          await pactService.acceptInvite(inviteCode);
+          await refreshUser();
+        } catch (inviteErr) {
+          setError(
+            inviteErr instanceof ApiRequestError
+              ? `Logged in, but that invite code didn't work: ${inviteErr.message}`
+              : "Logged in, but that invite code didn't work.",
+          );
+        }
+      }
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : 'Could not log in — check your details');
     } finally {
@@ -31,6 +47,11 @@ export function LoginScreen() {
   return (
     <Screen>
       <TopBar title="Log in" showBack />
+      {inviteCode && (
+        <Text className="mb-4 text-[13px] text-brand-clay">
+          We'll join you to your pact with code {inviteCode} right after you log in.
+        </Text>
+      )}
       <TextField
         label="Email or phone"
         value={identifier}

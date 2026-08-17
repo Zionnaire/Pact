@@ -45,7 +45,7 @@ export function WelcomeScreen() {
 
       <Animated.View entering={FadeInUp.delay(300).duration(700).springify().damping(18)} className="gap-3">
         <Button label="Start your pact" onPress={() => navigation.navigate('Register')} />
-        <Button label="I have an invite" variant="secondary" onPress={() => navigation.navigate('Register', { hasInvite: true })} />
+        <Button label="I have an invite code" variant="secondary" onPress={() => navigation.navigate('QuickJoin')} />
         <Pressable onPress={() => navigation.navigate('Login')} className="min-h-11 items-center justify-center">
           <Text className="text-[12px] text-brand-ink/40">Already have an account? Log in</Text>
         </Pressable>
