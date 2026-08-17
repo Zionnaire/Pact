@@ -15,6 +15,7 @@ async function loadOpenCycleOrThrow(pactId: string) {
   const pact = await Pact.findById(pactId);
   if (!pact) throw ApiError.notFound('Pact not found');
   if (pact.status === 'paused') throw ApiError.forbidden('This pact is paused — no new entries right now');
+  if (pact.status === 'ended') throw ApiError.forbidden('This pact has ended — start or join a new one to keep dropping entries');
 
   const cycle = pact.currentCycleId ? await Cycle.findById(pact.currentCycleId) : null;
   if (!cycle || cycle.status !== 'open') {

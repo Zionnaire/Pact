@@ -13,6 +13,7 @@ import {
   deleteAccountSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  completeProfileSchema,
 } from '../validators/auth.validator';
 
 const router = Router();
@@ -26,6 +27,7 @@ router.post('/logout', authMiddleware, validate(logoutSchema), authController.lo
 router.post('/logout-all', authMiddleware, authController.logoutAll);
 router.get('/me', authMiddleware, authController.me);
 router.patch('/me', authMiddleware, validate(updateProfileSchema), authController.updateProfile);
+router.post('/me/complete-profile', authMiddleware, validate(completeProfileSchema), authController.completeProfile);
 router.delete('/me', authMiddleware, validate(deleteAccountSchema), authController.deleteAccount);
 router.post('/me/avatar', authMiddleware, uploadImage, authController.uploadAvatar);
 router.get('/config', authController.appConfig);

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const deviceFields = {
+export const deviceFields = {
   deviceId: z.string().min(1),
   platform: z.enum(['ios', 'android', 'web']),
   appVersion: z.string().optional(),
@@ -53,3 +53,14 @@ export const resetPasswordSchema = z.object({
   code: z.string().length(6),
   newPassword: z.string().min(8).max(128),
 });
+
+export const completeProfileSchema = z
+  .object({
+    email: z.string().trim().toLowerCase().email().optional(),
+    phone: z.string().trim().min(7).max(20).optional(),
+    password: z.string().min(8).max(128),
+  })
+  .refine((data) => data.email || data.phone, {
+    message: 'Either email or phone is required',
+    path: ['email'],
+  });

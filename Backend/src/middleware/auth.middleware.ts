@@ -47,3 +47,18 @@ export const requirePairedPact = (req: Request, _res: Response, next: NextFuncti
   }
   next();
 };
+
+/**
+ * Guards dropping entries specifically — a "quick join" account
+ * (pact.controller.ts quickJoinInvite) has real login credentials on
+ * neither email/phone nor a chosen password, so writing sealed content
+ * into it risks the entries becoming unrecoverable the moment the session
+ * is lost. Everything else in the app (looking around, seeing the pact,
+ * settings) stays reachable — only the write path is gated.
+ */
+export const requireCompleteProfile = (req: Request, _res: Response, next: NextFunction) => {
+  if (!req.user!.profileComplete) {
+    throw ApiError.forbidden('Complete your profile (set an email/phone and password) before dropping entries');
+  }
+  next();
+};

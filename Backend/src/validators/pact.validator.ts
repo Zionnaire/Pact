@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { deviceFields } from './auth.validator';
 
 export const createPactSchema = z.object({
   name: z.string().trim().min(1).max(60).default('Our Pact'),
@@ -39,4 +40,9 @@ export const acceptInviteParamsSchema = z.object({
 
 export const inviteIdParamsSchema = z.object({
   id: z.string().length(24),
+});
+
+export const quickJoinSchema = z.object({
+  displayName: z.string().trim().min(1).max(60),
+  ...deviceFields,
 });

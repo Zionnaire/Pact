@@ -10,16 +10,13 @@ import { Types } from 'mongoose';
 import { User, IUser } from '../models/User.model';
 import { Session } from '../models/Session.model';
 import { Pact } from '../models/Pact.model';
-import { Entry } from '../models/Entry.model';
-import { Cycle } from '../models/Cycle.model';
-import { Notification } from '../models/Notification.model';
 import { ApiError } from '../utils/ApiError';
 import { ApiResponse } from '../utils/ApiResponse';
 import { asyncHandler } from '../utils/asyncHandler';
 import { config } from '../configs/config';
-import { cloudinary } from '../configs/cloudinary';
 import { sendEmail, emailEnabled } from '../configs/email';
 import { logger } from '../utils/logger';
+import { endPactForUser } from '../utils/pactLifecycle';
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -33,7 +30,7 @@ function refreshExpiryDate(): Date {
   return new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
 }
 
-async function issueTokensForSession(params: {
+export async function issueTokensForSession(params: {
   userId: Types.ObjectId;
   pactId?: Types.ObjectId;
   deviceId: string;
@@ -81,7 +78,7 @@ async function issueTokensForSession(params: {
   };
 }
 
-function sanitizeUser(user: IUser) {
+export function sanitizeUser(user: IUser) {
   return {
     id: user._id,
     displayName: user.displayName,
@@ -91,6 +88,7 @@ function sanitizeUser(user: IUser) {
     avatarInitial: user.avatarInitial,
     bio: user.bio,
     pactId: user.pactId,
+    profileComplete: user.profileComplete,
   };
 }
 
@@ -224,6 +222,34 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response) =>
   res.json(new ApiResponse(200, 'Profile updated', sanitizeUser(req.user!)));
 });
 
+/**
+ * For a "quick join" account (see pact.controller.ts quickJoinInvite) —
+ * sets real, recoverable login credentials and flips profileComplete to
+ * true, which lifts the drop-entry gate (entry.controller.ts). Normal
+ * (fully-registered) accounts can also call this harmlessly — it's just an
+ * email/phone + password change with no other side effects for them.
+ */
+export const completeProfile = asyncHandler(async (req: Request, res: Response) => {
+  const { email, phone, password } = req.body as { email?: string; phone?: string; password: string };
+
+  if (email) {
+    const existing = await User.findOne({ email, _id: { $ne: req.user!._id } });
+    if (existing) throw ApiError.conflict('An account with this email already exists');
+    req.user!.email = email;
+  }
+  if (phone) {
+    const existing = await User.findOne({ phone, _id: { $ne: req.user!._id } });
+    if (existing) throw ApiError.conflict('An account with this phone number already exists');
+    req.user!.phone = phone;
+  }
+
+  req.user!.passwordHash = await bcrypt.hash(password, 12);
+  req.user!.profileComplete = true;
+  await req.user!.save();
+
+  res.json(new ApiResponse(200, 'Profile completed', sanitizeUser(req.user!)));
+});
+
 export const uploadAvatar = asyncHandler(async (req: Request, res: Response) => {
   if (!req.cloudinaryUrl) {
     throw ApiError.badRequest('No image file uploaded');
@@ -263,35 +289,8 @@ export const deleteAccount = asyncHandler(async (req: Request, res: Response) =>
 
   if (user.pactId) {
     const pact = await Pact.findById(user.pactId);
-    if (pact) {
-      const unrevealedCycles = await Cycle.find({ pactId: pact._id, status: { $in: ['open', 'ready'] } }).select('_id');
-      const unrevealedCycleIds = unrevealedCycles.map((c) => c._id);
-
-      const ownUnrevealedEntries = await Entry.find({
-        cycleId: { $in: unrevealedCycleIds },
-        authorId: user._id,
-      }).select('audioPublicId');
-
-      for (const entry of ownUnrevealedEntries) {
-        if (entry.audioPublicId) {
-          await cloudinary.uploader.destroy(entry.audioPublicId, { resource_type: 'video' }).catch((err) => {
-            logger.error(`Failed to delete Cloudinary audio ${entry.audioPublicId} during account deletion:`, err);
-          });
-        }
-      }
-      await Entry.deleteMany({ cycleId: { $in: unrevealedCycleIds }, authorId: user._id });
-
-      pact.status = 'ended';
-      await pact.save();
-
-      const partnerId = pact.partners.find((id) => !id.equals(user._id));
-      if (partnerId) {
-        await Notification.create({
-          userId: partnerId,
-          kind: 'partner_left',
-          payload: { pactId: pact._id },
-        });
-      }
+    if (pact && pact.status !== 'ended') {
+      await endPactForUser(pact, user._id);
     }
   }
 

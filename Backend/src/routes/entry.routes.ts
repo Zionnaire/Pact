@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import * as entryController from '../controllers/entry.controller';
-import { authMiddleware, requirePairedPact } from '../middleware/auth.middleware';
+import { authMiddleware, requirePairedPact, requireCompleteProfile } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validate.middleware';
 import { uploadAudio } from '../middleware/upload.middleware';
 import {
@@ -20,8 +20,8 @@ router.get('/export', authMiddleware, entryController.exportMyData);
 router.use(authMiddleware, requirePairedPact);
 
 router.get('/mine', entryController.getMyEntries);
-router.post('/', validate(createEntrySchema), entryController.createEntry);
-router.post('/voice', uploadAudio, validate(createEntrySchema), entryController.createVoiceEntry);
+router.post('/', requireCompleteProfile, validate(createEntrySchema), entryController.createEntry);
+router.post('/voice', requireCompleteProfile, uploadAudio, validate(createEntrySchema), entryController.createVoiceEntry);
 router.patch('/:id', validate(entryIdParamsSchema, 'params'), validate(updateEntrySchema), entryController.updateEntry);
 router.delete('/:id', validate(entryIdParamsSchema, 'params'), entryController.deleteEntry);
 router.patch(
